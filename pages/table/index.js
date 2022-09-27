@@ -273,7 +273,7 @@ const TableDemo = () => {
     const headerTemplate = (data) => {
         return (
             <React.Fragment>
-                <img alt={data.representative.name} src={`${contextPath}/demo/images/avatar/${data.representative.image}`} width="32" style={{ verticalAlign: "middle" }} />
+                <img alt={data.representative.name} src={`demo/images/avatar/${data.representative.image}`} width="32" style={{ verticalAlign: "middle" }} />
                 <span className="image-text font-bold">{data.representative.name}</span>
             </React.Fragment>
         );
