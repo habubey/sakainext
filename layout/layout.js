@@ -1,4 +1,4 @@
-import React, { useRef, useContext } from "react";
+import React, { useRef, useContext, useEffect } from "react";
 import Head from "next/head";
 import { CSSTransition } from "react-transition-group";
 import AppTopbar from "./AppTopbar";
@@ -11,22 +11,40 @@ import { Tooltip } from "primereact/tooltip";
 import getConfig from "next/config";
 import { LayoutContext } from "./layoutcontext";
 import classNames from "classnames";
-
+import { useEventListener } from "primereact/hooks";
 function Layout({ children }) {
-    const { inputStyle, ripple, layoutColorMode, layoutMode, staticMenuInactive, overlayMenuActive, onWrapperClick, onSidebarClick, mobileMenuActive } = useContext(LayoutContext);
+    const { layoutState, layoutConfig, onWrapperClick, onSidebarClick } = useContext(LayoutContext);
     const copyTooltipRef = useRef();
     const contextPath = getConfig().publicRuntimeConfig.contextPath;
     PrimeReact.ripple = true;
+    const containerRef = useRef();
+    const sideBarRef = useRef();
+
+    const [bindTopbarDocumentClickListener, unbindTopbarDocumentClickListener] = useEventListener({
+        target: containerRef,
+        type: "click",
+        listener: onWrapperClick,
+    });
+    const [bindSidebarDocumentClickListener, unbindSidebarDocumentClickListener] = useEventListener({
+        target: sideBarRef,
+        type: "click",
+        listener: onSidebarClick,
+    });
+
+    useEffect(() => {
+        bindTopbarDocumentClickListener();
+        bindSidebarDocumentClickListener();
+    }, [layoutConfig.overlayMenuActive]);
 
     const containerClass = classNames("layout-wrapper", {
-        "layout-overlay": layoutMode === "overlay",
-        "layout-static": layoutMode === "static",
-        "layout-static-sidebar-inactive": staticMenuInactive && layoutMode === "static",
-        "layout-overlay-sidebar-active": overlayMenuActive && layoutMode === "overlay",
-        "layout-mobile-sidebar-active": mobileMenuActive,
-        "p-input-filled": inputStyle === "filled",
-        "p-ripple-disabled": ripple === false,
-        "layout-theme-light": layoutColorMode === "light",
+        "layout-overlay": layoutState.layoutMode === "overlay",
+        "layout-static": layoutState.layoutMode === "static",
+        "layout-static-sidebar-inactive": layoutConfig.staticMenuInactive && layoutState.layoutMode === "static",
+        "layout-overlay-sidebar-active": layoutConfig.overlayMenuActive && layoutState.layoutMode === "overlay",
+        "layout-mobile-sidebar-active": layoutConfig.mobileMenuActive,
+        "p-input-filled": layoutState.inputStyle === "filled",
+        "p-ripple-disabled": layoutState.ripple === false,
+        "layout-theme-light": layoutState.layoutColorMode === "light",
     });
 
     return (
@@ -42,12 +60,12 @@ function Layout({ children }) {
                     {/* eslint-enable */}
                 </Head>
 
-                <div className={containerClass} onClick={onWrapperClick}>
+                <div ref={containerRef} className={containerClass}>
                     <Tooltip ref={copyTooltipRef} target=".block-action-copy" position="bottom" content="Copied to clipboard" event="focus" />
 
                     <AppTopbar />
 
-                    <div className="layout-sidebar" onClick={onSidebarClick}>
+                    <div ref={sideBarRef} className="layout-sidebar">
                         <AppMenu />
                     </div>
 
@@ -58,7 +76,7 @@ function Layout({ children }) {
                     </div>
                     <AppConfig />
 
-                    <CSSTransition classNames="layout-mask" timeout={{ enter: 200, exit: 200 }} in={mobileMenuActive} unmountOnExit>
+                    <CSSTransition classNames="layout-mask" timeout={{ enter: 200, exit: 200 }} in={layoutConfig.mobileMenuActive} unmountOnExit>
                         <div className="layout-mask p-component-overlay"></div>
                     </CSSTransition>
                 </div>
